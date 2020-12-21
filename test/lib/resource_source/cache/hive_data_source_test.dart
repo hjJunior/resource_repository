@@ -3,13 +3,10 @@ import 'package:hive/hive.dart';
 import 'package:mockito/mockito.dart';
 import 'package:resource_repository/resource_source/cache/hive_data_source.dart';
 import 'package:resource_repository/resource_source/resource.dart';
-import 'package:uuid/uuid.dart';
 
 class MockResource extends Mock implements Resource {}
 
-class MockLazyBox extends Mock implements LazyBox<MockResource> {}
-
-class MockUuid extends Mock implements Uuid {}
+class MockBox extends Mock implements Box<MockResource> {}
 
 class HiveResourceSourceImpl extends HiveResourceSource {
   @override
@@ -17,26 +14,25 @@ class HiveResourceSourceImpl extends HiveResourceSource {
 }
 
 void main() {
-  MockLazyBox box;
+  MockBox box;
   MockResource model;
   MockResource model2;
-  MockUuid uuid;
   HiveResourceSourceImpl subject;
 
   setUp(() async {
-    box = MockLazyBox();
+    box = MockBox();
     model = MockResource();
     model2 = MockResource();
-    uuid = MockUuid();
     subject = HiveResourceSourceImpl();
 
-    await subject.initialize(box, uuid);
+    await subject.initialize(box);
   });
 
   test('.findAll', () async {
-    when(box.keys).thenReturn(['key-1', 'key-2']);
-    when(box.get('key-1')).thenAnswer((_) => Future.value(model));
-    when(box.get('key-2')).thenAnswer((_) => Future.value(model2));
+    // Be sure that converts keys to int
+    when(box.keys).thenReturn(['1', 2]);
+    when(box.get(1)).thenAnswer((_) => model);
+    when(box.get(2)).thenAnswer((_) => model2);
 
     final result = await subject.findAll();
 
@@ -44,43 +40,74 @@ void main() {
 
     verifyInOrder([
       box.keys,
-      box.get('key-1', defaultValue: null),
-      box.get('key-2', defaultValue: null),
+      box.get(1, defaultValue: null),
+      box.get(2, defaultValue: null),
     ]);
   });
 
   test('.findOne', () async {
-    when(box.get('key-1')).thenAnswer((_) => Future.value(model));
+    when(box.get(1)).thenAnswer((_) => model);
 
-    final result = await subject.findOne('key-1');
+    final result = await subject.findOne('1');
 
     expect(result, model);
 
-    verify(box.get('key-1', defaultValue: null)).called(1);
+    verify(box.get(1, defaultValue: null)).called(1);
+  });
+
+  group('.findOneByExternalId', () {
+    test('when find local register', () async {
+      when(box.keys).thenReturn([1]);
+      when(model.externalId).thenReturn('fake-external-id');
+      when(box.get(1)).thenAnswer((_) => model);
+
+      final result = await subject.findOneByExternalId('fake-external-id');
+
+      expect(result, model);
+
+      verify(box.get(1, defaultValue: null)).called(1);
+    });
+
+    test('when find no local register', () async {
+      when(box.keys).thenReturn([1]);
+      when(model.externalId).thenReturn('fake-external-id-2');
+      when(box.get(1)).thenAnswer((_) => model);
+
+      final result = await subject.findOneByExternalId('fake-external-id');
+
+      expect(result, null);
+
+      verify(box.get(1, defaultValue: null)).called(1);
+    });
   });
 
   test('.update', () async {
-    final result = await subject.update('key-1', model);
+    final result = await subject.update('1', model);
 
     expect(result, model);
 
-    verify(box.put('key-1', model)).called(1);
+    verify(box.put(1, model)).called(1);
   });
 
   test('.create', () async {
-    when(uuid.v4()).thenReturn('fake-uuid');
+    const key = 1;
+    when(box.add(model)).thenAnswer((_) => Future.value(key));
+
     final result = await subject.create(model);
 
     expect(result, model);
 
-    verify(box.put('fake-uuid', model)).called(1);
-    verify(uuid.v4()).called(1);
+    verifyInOrder([
+      box.add(model),
+      model.id = key.toString(),
+      box.put(key, model),
+    ]);
   });
 
   test('.delete', () async {
-    await subject.delete('key-1');
+    await subject.delete('1');
 
-    verify(box.delete('key-1')).called(1);
+    verify(box.delete(1)).called(1);
   });
 
   test('.clear', () async {

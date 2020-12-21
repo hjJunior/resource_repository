@@ -4,7 +4,7 @@ import 'package:resource_repository/resource_source/cache/index.dart';
 import 'package:resource_repository/resource_source/remote/index.dart';
 import 'package:resource_repository/resource_source/resource.dart';
 
-class RemoteFirstCacheUpdateStrategy<T extends Resource>
+class RemoteFirstRepositoryStrategy<T extends Resource>
     implements RepositoryStrategy<T> {
   final RemoteResourceSource<T> remoteSource;
   final CacheResourceSource<T> cacheSource;
@@ -12,7 +12,7 @@ class RemoteFirstCacheUpdateStrategy<T extends Resource>
 
   bool _cachedInitialized = false;
 
-  RemoteFirstCacheUpdateStrategy({
+  RemoteFirstRepositoryStrategy({
     this.cacheSource,
     this.remoteSource,
     this.cacheUpdate,

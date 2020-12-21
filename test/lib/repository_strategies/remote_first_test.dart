@@ -21,7 +21,7 @@ void main() {
   MockRemoteResourceSource remoteSource;
   MockCacheUpdateStrategy cacheUpdate;
 
-  RemoteFirstCacheUpdateStrategy subject;
+  RemoteFirstRepositoryStrategy subject;
 
   setUp(() {
     model = MockResource();
@@ -29,7 +29,7 @@ void main() {
     cacheSource = MockCacheResourceSource();
     cacheUpdate = MockCacheUpdateStrategy();
     remoteSource = MockRemoteResourceSource();
-    subject = RemoteFirstCacheUpdateStrategy(
+    subject = RemoteFirstRepositoryStrategy(
       cacheSource: cacheSource,
       remoteSource: remoteSource,
       cacheUpdate: cacheUpdate,

@@ -1,4 +1,4 @@
 abstract class Resource {
-  String get idKey;
-  String get externalIdKey;
+  String id;
+  String externalId;
 }

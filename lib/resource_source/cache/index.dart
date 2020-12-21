@@ -7,4 +7,5 @@ export 'hive_data_source.dart';
 abstract class CacheResourceSource<T extends Resource>
     implements ResourceSource<T> {
   Future<void> initialize();
+  Future<T> findOneByExternalId(String externalId);
 }
