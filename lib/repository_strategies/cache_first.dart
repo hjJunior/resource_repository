@@ -1,3 +1,4 @@
+import 'package:resource_repository/cache_strategies/strategy.dart';
 import 'package:resource_repository/repository_strategies/strategy.dart';
 import 'package:resource_repository/resource_source/cache/index.dart';
 import 'package:resource_repository/resource_source/remote/index.dart';
@@ -7,10 +8,15 @@ class CacheFirstRepositoryStrategy<T extends Resource>
     implements RepositoryStrategy<T> {
   final RemoteResourceSource<T> remoteSource;
   final CacheResourceSource<T> cacheSource;
+  final CacheUpdateStrategy<T> cacheUpdate;
 
   bool _cachedInitialized = false;
 
-  CacheFirstRepositoryStrategy({this.cacheSource, this.remoteSource});
+  CacheFirstRepositoryStrategy({
+    this.cacheSource,
+    this.remoteSource,
+    this.cacheUpdate,
+  });
 
   Future<List<T>> getAll() async {
     await _initCacheIfRequired();
@@ -21,6 +27,7 @@ class CacheFirstRepositoryStrategy<T extends Resource>
       data = await cacheSource.findAll();
     } catch (e) {
       data = await remoteSource.findAll();
+      await cacheUpdate.onGetAll(data);
     }
 
     return data;
@@ -35,6 +42,7 @@ class CacheFirstRepositoryStrategy<T extends Resource>
       data = await cacheSource.findOne(resourceId);
     } catch (e) {
       data = await remoteSource.findOne(resourceId);
+      await cacheUpdate.onGet(data);
     }
 
     return data;
@@ -44,7 +52,8 @@ class CacheFirstRepositoryStrategy<T extends Resource>
     await _initCacheIfRequired();
 
     await cacheSource.create(model);
-    await remoteSource.create(model);
+    final remoteModel = await remoteSource.create(model);
+    await cacheUpdate.onCreate(remoteModel);
   }
 
   Future update(String resourceId, T model) async {

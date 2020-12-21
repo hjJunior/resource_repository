@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:resource_repository/cache_strategies/strategy.dart';
 import 'package:resource_repository/repository_strategies/cache_first.dart';
 import 'package:resource_repository/resource_source/cache/index.dart';
 import 'package:resource_repository/resource_source/remote/index.dart';
@@ -11,19 +12,26 @@ class MockRemoteResourceSource extends Mock implements RemoteResourceSource {}
 
 class MockResource extends Mock implements Resource {}
 
+class MockCacheUpdateStrategy extends Mock implements CacheUpdateStrategy {}
+
 void main() {
   MockResource model;
+  MockResource model2;
   MockCacheResourceSource cacheSource;
   MockRemoteResourceSource remoteSource;
+  MockCacheUpdateStrategy cacheUpdate;
   CacheFirstRepositoryStrategy subject;
 
   setUp(() {
     model = MockResource();
+    model2 = MockResource();
     cacheSource = MockCacheResourceSource();
+    cacheUpdate = MockCacheUpdateStrategy();
     remoteSource = MockRemoteResourceSource();
     subject = CacheFirstRepositoryStrategy(
       cacheSource: cacheSource,
       remoteSource: remoteSource,
+      cacheUpdate: cacheUpdate,
     );
   });
 
@@ -40,6 +48,7 @@ void main() {
       expect(result, [model]);
       verify(cacheSource.findAll()).called(1);
       verifyZeroInteractions(remoteSource);
+      verifyZeroInteractions(cacheUpdate);
     });
 
     test('when does not contain data on cache', () async {
@@ -51,6 +60,7 @@ void main() {
       expect(result, [model]);
       verify(cacheSource.findAll()).called(1);
       verify(remoteSource.findAll()).called(1);
+      verify(cacheUpdate.onGetAll([model])).called(1);
     });
   });
 
@@ -63,6 +73,7 @@ void main() {
       expect(result, model);
       verify(cacheSource.findOne('id')).called(1);
       verifyZeroInteractions(remoteSource);
+      verifyZeroInteractions(cacheUpdate);
     });
 
     test('when does not contain data on cache', () async {
@@ -74,15 +85,19 @@ void main() {
       expect(result, model);
       verify(cacheSource.findOne('id')).called(1);
       verify(remoteSource.findOne('id')).called(1);
+      verify(cacheUpdate.onGet(model)).called(1);
     });
   });
 
   test('.create', () async {
+    when(remoteSource.create(model)).thenAnswer((_) => Future.value(model2));
+
     await subject.create(model);
 
     verifyInOrder([
       cacheSource.create(model),
       remoteSource.create(model),
+      cacheUpdate.onCreate(model2),
     ]);
   });
 
