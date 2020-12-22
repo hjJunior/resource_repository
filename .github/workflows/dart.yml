@@ -6,15 +6,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: jro7/flutter_lcov:latest
+      image: cirrusci/flutter:stable
     steps:
     - uses: actions/checkout@v1
     - name: Install dependencies
       run: flutter pub get
     - name: Run tests
       run: flutter test --coverage
-    - name: Collect coverage
-      run: genhtml coverage/lcov.info --output=coverage
     - uses: codecov/codecov-action@v1.0.3
       with:
         token: ${{secrets.CODECOV_TOKEN}}

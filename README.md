@@ -1,4 +1,6 @@
 # Resource Repository
+![CI](https://github.com/hjJunior/resource_repository/workflows/CI/badge.svg)
+[![codecov](https://codecov.io/gh/hjJunior/resource_repository/branch/master/graph/badge.svg?token=S7B7XVRPOP)](https://codecov.io/gh/hjJunior/resource_repository)
 
 ## Usage
 ```dart
