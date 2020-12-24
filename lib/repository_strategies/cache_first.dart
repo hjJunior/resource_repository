@@ -1,4 +1,5 @@
 import 'package:resource_repository/cache_strategies/strategy.dart';
+import 'package:resource_repository/exceptions/cache_is_empty.dart';
 import 'package:resource_repository/repository_strategies/strategy.dart';
 import 'package:resource_repository/resource_source/cache/index.dart';
 import 'package:resource_repository/resource_source/remote/index.dart';
@@ -25,6 +26,7 @@ class CacheFirstRepositoryStrategy<T extends Resource>
 
     try {
       data = await cacheSource.findAll();
+      if (data == null || data.isEmpty) throw CacheIsEmptyError();
     } catch (e) {
       data = await remoteSource.findAll();
       await cacheUpdate.onGetAll(data);
@@ -40,6 +42,7 @@ class CacheFirstRepositoryStrategy<T extends Resource>
 
     try {
       data = await cacheSource.findOne(resourceId);
+      if (data == null) throw CacheIsEmptyError();
     } catch (e) {
       data = await remoteSource.findOne(resourceId);
       await cacheUpdate.onGet(data);
