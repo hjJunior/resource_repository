@@ -22,14 +22,21 @@ void main() {
 
     group('.onCreate', () {
       test('when find register by external id', () async {
+        final localModel = MockResource();
+        final copyModel = MockResource();
+
+        when(localModel.id).thenReturn('fake-local-id');
+        when(localModel.copy(model)).thenReturn(copyModel);
+
         when(model.externalId).thenReturn('fake-external-id');
-        when(model.id).thenReturn('fake-local-id');
         when(cacheSource.findOneByExternalId('fake-external-id'))
-            .thenAnswer((_) => Future.value(model));
+            .thenAnswer((_) => Future.value(localModel));
 
         await subject.onCreate(model);
 
-        verify(cacheSource.update('fake-local-id', model)).called((1));
+        verify(cacheSource.update('fake-local-id', copyModel)).called((1));
+        verify(localModel.copy(model)).called(1);
+        verifyNever(localModel.shallowCopy(any));
         verifyNever(cacheSource.create(any));
       });
 
@@ -68,15 +75,22 @@ void main() {
 
     group('.onGet', () {
       test('when find register by external id', () async {
+        final localModel = MockResource();
+        final copyModel = MockResource();
+
+        when(localModel.id).thenReturn('fake-local-id');
+        when(localModel.copy(model)).thenReturn(copyModel);
+
         when(model.id).thenReturn('fake-local-id');
         when(model.externalId).thenReturn('fake-external-id');
         when(cacheSource.findOneByExternalId('fake-external-id'))
-            .thenAnswer((_) => Future.value(model));
+            .thenAnswer((_) => Future.value(localModel));
 
         await subject.onGet(model);
 
-        verify(cacheSource.update("fake-local-id", model)).called(1);
+        verify(cacheSource.update("fake-local-id", copyModel)).called(1);
         verify(cacheSource.findOneByExternalId("fake-external-id")).called(1);
+        verifyNever(localModel.shallowCopy(any));
         verifyNever(cacheSource.create(any));
       });
 
@@ -95,29 +109,43 @@ void main() {
     });
 
     test('.onGetAll', () async {
+      final localModel = MockResource();
+      final copyModel = MockResource();
+
+      when(localModel.id).thenReturn('fake-local-id-1');
+      when(localModel.shallowCopy(model)).thenReturn(copyModel);
+
       when(model.id).thenReturn('fake-local-id-1');
       when(model.externalId).thenReturn('fake-external-id-1');
       when(cacheSource.findOneByExternalId('fake-external-id-1'))
-          .thenAnswer((_) => Future.value(model));
+          .thenAnswer((_) => Future.value(localModel));
 
       await subject.onGetAll([model]);
 
-      verify(cacheSource.update(any, any)).called(1);
+      verify(cacheSource.update('fake-local-id-1', copyModel)).called(1);
       verify(cacheSource.findOneByExternalId("fake-external-id-1"));
+      verifyNever(localModel.copy(any));
       verifyNever(cacheSource.create(any));
     });
 
     group('.onUpdate', () {
       test('when find register by external id', () async {
+        final localModel = MockResource();
+        final copyModel = MockResource();
+
+        when(localModel.id).thenReturn('fake-local-id');
+        when(localModel.copy(model)).thenReturn(copyModel);
+
         when(model.id).thenReturn('fake-local-id');
         when(model.externalId).thenReturn('fake-external-id');
         when(cacheSource.findOneByExternalId('fake-external-id'))
-            .thenAnswer((_) => Future.value(model));
+            .thenAnswer((_) => Future.value(localModel));
 
         await subject.onUpdate('fake-external-id', model);
 
-        verify(cacheSource.update("fake-local-id", model)).called(1);
+        verify(cacheSource.update("fake-local-id", copyModel)).called(1);
         verify(cacheSource.findOneByExternalId("fake-external-id")).called(1);
+        verifyNever(localModel.shallowCopy(any));
         verifyNever(cacheSource.create(any));
       });
 

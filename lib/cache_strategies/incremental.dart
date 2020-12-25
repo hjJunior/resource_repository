@@ -17,7 +17,7 @@ class IncrementalCacheUpdateStrategy<T extends Resource>
         await cacheSource.findOneByExternalId(model.externalId);
 
     if (localRegister != null) {
-      cacheSource.update(localRegister.id, model);
+      cacheSource.update(localRegister.id, localRegister.copy(model));
       return;
     }
 
@@ -42,7 +42,7 @@ class IncrementalCacheUpdateStrategy<T extends Resource>
         await cacheSource.findOneByExternalId(model.externalId);
 
     if (localRegister != null) {
-      cacheSource.update(localRegister.id, model);
+      cacheSource.update(localRegister.id, localRegister.copy(model));
       return;
     }
 
@@ -54,7 +54,15 @@ class IncrementalCacheUpdateStrategy<T extends Resource>
     await _initCacheIfRequired();
 
     for (final model in remoteDataList) {
-      await onGet(model);
+      final localRegister =
+          await cacheSource.findOneByExternalId(model.externalId);
+
+      if (localRegister != null) {
+        cacheSource.update(localRegister.id, localRegister.shallowCopy(model));
+        return;
+      }
+
+      await cacheSource.create(model);
     }
   }
 

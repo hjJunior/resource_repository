@@ -24,4 +24,30 @@ class UserResource implements Resource {
   String toString() {
     return 'id: $id - externalId: $externalId';
   }
+
+  @override
+  Resource copy(Resource obj) {
+    if (obj is UserResource) {
+      return UserResource(
+        id: obj.id,
+        externalId: obj.externalId,
+        name: obj.name,
+      );
+    }
+
+    return this;
+  }
+
+  @override
+  Resource shallowCopy(Resource obj) {
+    if (obj is UserResource) {
+      return UserResource(
+        id: obj.id,
+        externalId: obj.externalId,
+        name: name,
+      );
+    }
+
+    return this;
+  }
 }
